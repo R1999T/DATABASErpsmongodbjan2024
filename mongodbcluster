@@ -1,0 +1,116 @@
+[12:17 PM] Suraj Pandey
+sudo wget https://downloads.mongodb.com/compass/mongodb-mongosh_2.0.0_amd64.deb
+[12:17 PM] Suraj Pandey
+sudo dpkg -i mongodb-mongosh_2.0.0_amd64.deb
+[12:20 PM] Suraj Pandey
+mongosh mongodb://172.17.0.1:10001
+[12:38 PM] Suraj Pandey
+docker network create lti_network
+ 
+Go to config server folder
+
+docker-compose up -d
+
+mongosh mongodb://172.17.0.1:10001
+ 
+rs.initiate(
+
+  {
+
+    _id: "config_rs",
+
+    configsvr: true,
+
+    members: [
+
+      { _id : 0, host : "172.17.0.1:10001" },
+
+      { _id : 1, host : "172.17.0.1:10002" },
+
+      { _id : 2, host : "172.17.0.1:10003" }
+
+    ]
+
+  }
+
+)
+
+rs.status()
+ 
+Go to shard server1 folder
+
+docker-compose up -d
+
+mongosh mongodb://172.17.0.1:20001
+
+rs.initiate(
+
+  {
+
+    _id: "shard1_rs",
+
+    members: [
+
+      { _id : 0, host : "172.17.0.1:20001" },
+
+      { _id : 1, host : "172.17.0.1:20002" },
+
+      { _id : 2, host : "172.17.0.1:20003" }
+
+    ]
+
+  }
+
+)
+ 
+rs.status()
+ 
+Go to shard server2 folder
+
+docker-compose up -d
+ 
+mongosh mongodb://172.17.0.1:20004
+ 
+rs.initiate(
+
+  {
+
+    _id: "shard2_rs",
+
+    members: [
+
+      { _id : 0, host : "172.17.0.1:20004" },
+
+      { _id : 1, host : "172.17.0.1:20005" },
+
+      { _id : 2, host : "172.17.0.1:20006" }
+
+    ]
+
+  }
+
+)
+
+rs.status()
+ 
+run router
+
+Goto router folder
+
+docker-compose up -d
+ 
+mongosh mongodb://172.17.0.1:30000
+ 
+sh.addShard("shard1_rs/172.17.0.1:20001,172.17.0.1:20002,172.17.0.1:20003")
+ 
+sh.addShard("shard2_rs/172.17.0.1:20004,172.17.0.1:20005,172.17.0.1:20006")
+
+sh.status()
+
+sh.enableSharding("testdb")
+
+sh.shardCollection("testdb.employees", { name: 1 } )
+
+db.employees.insertOne({"name":"Parameswari"})
+
+db.employees.getShardDistribution()
